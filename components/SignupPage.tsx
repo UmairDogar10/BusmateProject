@@ -2,13 +2,14 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeft,
   ArrowRight,
   CarFront,
   Crown,
+  Eye,
+  EyeOff,
   GraduationCap,
 } from "lucide-react";
 
@@ -19,7 +20,6 @@ const roleOptions = [
 ] as const;
 
 export function SignupPage() {
-  const router = useRouter();
   const [step, setStep] = useState<"role" | "form">("role");
   const [selectedRole, setSelectedRole] = useState("");
   const [form, setForm] = useState({
@@ -29,6 +29,7 @@ export function SignupPage() {
     studentId: "",
     driverId: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -40,6 +41,7 @@ export function SignupPage() {
     try {
       const response = await fetch("/api/auth/register", {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -61,7 +63,7 @@ export function SignupPage() {
         return;
       }
 
-      router.push(`/${data.user.role}`);
+      window.location.assign(`/${data.user.role}`);
     } catch (err) {
       setError("Signup failed. Please try again.");
       setIsLoading(false);
@@ -167,19 +169,37 @@ export function SignupPage() {
                   className="w-full rounded-xl border border-slate-600 bg-slate-900/80 px-4 py-3 text-slate-100"
                   required
                 />
-                <input
-                  type="password"
-                  placeholder="Password"
-                  value={form.password}
-                  onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      password: event.target.value,
-                    }))
-                  }
-                  className="w-full rounded-xl border border-slate-600 bg-slate-900/80 px-4 py-3 text-slate-100"
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Password"
+                    value={form.password}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        password: event.target.value,
+                      }))
+                    }
+                    className="w-full rounded-xl border border-slate-600 bg-slate-900/80 py-3 pl-4 pr-12 text-slate-100"
+                    required
+                    minLength={6}
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-800 hover:text-slate-200"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" aria-hidden />
+                    ) : (
+                      <Eye className="h-5 w-5" aria-hidden />
+                    )}
+                  </button>
+                </div>
                 {selectedRole === "student" ? (
                   <input
                     type="text"

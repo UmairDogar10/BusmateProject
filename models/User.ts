@@ -56,18 +56,7 @@ const UserSchema: Schema = new Schema(
   },
 );
 
-// Hash password before saving
-UserSchema.pre<IUser>("save", async function (next) {
-  if (!this.isModified("password")) return next();
-
-  try {
-    const salt = await bcrypt.genSalt(12);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error: any) {
-    next(error);
-  }
-});
+// Passwords are hashed in API routes (register / future reset). Avoids pre('save') + `next` issues in Next.js + Mongoose.
 
 // Compare password method
 UserSchema.methods.comparePassword = async function (

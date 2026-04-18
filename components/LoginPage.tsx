@@ -2,13 +2,14 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeft,
   ArrowRight,
   CarFront,
   Crown,
+  Eye,
+  EyeOff,
   GraduationCap,
 } from "lucide-react";
 
@@ -19,10 +20,10 @@ const roleOptions = [
 ] as const;
 
 export function LoginPage() {
-  const router = useRouter();
   const [step, setStep] = useState<"role" | "form">("role");
   const [selectedRole, setSelectedRole] = useState("");
   const [credentials, setCredentials] = useState({ email: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -34,6 +35,7 @@ export function LoginPage() {
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -57,7 +59,9 @@ export function LoginPage() {
         return;
       }
 
-      router.push(`/${data.user.role}`);
+      const rolePath = `/${data.user.role}`;
+      // Full navigation: cookie is set on the login response; Edge middleware needs a real request with jose-verified JWT (jsonwebtoken breaks in Edge).
+      window.location.assign(rolePath);
     } catch (error) {
       setError("Unable to login. Please try again.");
       setIsLoading(false);
@@ -165,19 +169,36 @@ export function LoginPage() {
                   className="w-full rounded-xl border border-slate-600 bg-slate-900/80 px-4 py-3 text-slate-100"
                   required
                 />
-                <input
-                  type="password"
-                  placeholder="Password"
-                  value={credentials.password}
-                  onChange={(event) =>
-                    setCredentials((prev) => ({
-                      ...prev,
-                      password: event.target.value,
-                    }))
-                  }
-                  className="w-full rounded-xl border border-slate-600 bg-slate-900/80 px-4 py-3 text-slate-100"
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Password"
+                    value={credentials.password}
+                    onChange={(event) =>
+                      setCredentials((prev) => ({
+                        ...prev,
+                        password: event.target.value,
+                      }))
+                    }
+                    className="w-full rounded-xl border border-slate-600 bg-slate-900/80 py-3 pl-4 pr-12 text-slate-100"
+                    required
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-800 hover:text-slate-200"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" aria-hidden />
+                    ) : (
+                      <Eye className="h-5 w-5" aria-hidden />
+                    )}
+                  </button>
+                </div>
               </div>
               {error ? (
                 <p className="mt-4 text-sm text-red-300">{error}</p>

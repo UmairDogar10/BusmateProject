@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 import dbConnect from "@/lib/mongodb";
 import { User } from "@/models";
 import { generateToken } from "@/lib/auth";
@@ -47,10 +48,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create new user
+    const salt = await bcrypt.genSalt(12);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create new user (hash here — Mongoose save middleware is unreliable in this runtime)
     const user = new User({
       email: email.toLowerCase(),
-      password,
+      password: hashedPassword,
       name,
       role,
       studentId: role === "student" ? studentId : undefined,

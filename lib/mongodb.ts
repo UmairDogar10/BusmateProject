@@ -37,8 +37,18 @@ async function dbConnect() {
 
   try {
     cached.conn = await cached.promise;
+    const { connection } = cached.conn;
+    console.log("[MongoDB] Connected", {
+      database: connection.name,
+      host: connection.host,
+      readyState: connection.readyState, // 1 = connected
+    });
   } catch (e) {
     cached.promise = null;
+    console.error(
+      "[MongoDB] Connection failed:",
+      e instanceof Error ? e.message : e,
+    );
     throw e;
   }
 

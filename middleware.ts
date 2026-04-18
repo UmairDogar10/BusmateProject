@@ -1,28 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import { jwtVerify } from "jose";
 
+/** Must match `JWT_SECRET` used in `lib/auth.ts` (jsonwebtoken sign) and API routes. */
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
-function verifyToken(token?: string) {
+async function verifyToken(token?: string) {
   if (!token) return null;
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    if (typeof decoded === "object" && decoded && "role" in decoded) {
-      return decoded as { role?: string };
+    const secret = new TextEncoder().encode(JWT_SECRET);
+    const { payload } = await jwtVerify(token, secret, {
+      algorithms: ["HS256"],
+    });
+    const role = payload.role;
+    if (typeof role === "string") {
+      return { role };
     }
-
     return null;
   } catch {
     return null;
   }
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const token = request.cookies.get("token")?.value;
-  const payload = verifyToken(token);
+  const payload = await verifyToken(token);
 
   if (pathname === "/login" || pathname === "/signup") {
     if (payload && payload.role) {
