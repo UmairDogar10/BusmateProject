@@ -2,12 +2,19 @@ export type Bus = {
   id: string;
   name: string;
   route: string;
+  /** Short path/description shown on map (e.g. stop sequence) */
+  routeLabel?: string;
+  /** Official route name from Route document (map popup / ETA) */
+  routeName?: string;
+  /** Assigned driver display name (map popup) */
+  driverName?: string;
   eta: number;
   seatsAvailable: number;
   /** Matches `Route` document id in MongoDB for ETA/seat sync */
   routeId?: string;
   /** Fleet capacity upper bound for occupancy UI */
   totalSeats?: number;
+  /** True when the driver has started a trip (synced to MongoDB `isLive`) */
   isLive: boolean;
   position: {
     x: number;

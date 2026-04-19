@@ -16,13 +16,13 @@ type AssignmentApi = {
 
 export function DriverInterface() {
   const buses = useBusMateStore((state) => state.buses);
-  const driverTripActive = useBusMateStore((state) => state.driverTripActive);
   const gpsActive = useBusMateStore((state) => state.gpsActive);
   const startTrip = useBusMateStore((state) => state.startTrip);
   const endTrip = useBusMateStore((state) => state.endTrip);
   const setGpsActive = useBusMateStore((state) => state.setGpsActive);
   const updateSeatAvailability = useBusMateStore((state) => state.updateSeatAvailability);
   const upsertBus = useBusMateStore((state) => state.upsertBus);
+  const updateBusFromFeed = useBusMateStore((state) => state.updateBusFromFeed);
   const pushNotification = useBusMateStore((state) => state.pushNotification);
 
   const saveSeatTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -77,6 +77,29 @@ export function DriverInterface() {
   };
 
   const seatMax = Math.max(1, controlledBus?.totalSeats ?? 40);
+  const tripOn = Boolean(controlledBus?.isLive);
+
+  const handleStartTrip = async () => {
+    if (!controlledBus) return;
+    try {
+      await axios.patch(`/api/buses/${controlledBus.id}`, { isLive: true });
+      updateBusFromFeed(controlledBus.id, { isLive: true });
+      startTrip();
+    } catch {
+      pushNotification("Could not start trip on the server.", "error");
+    }
+  };
+
+  const handleEndTrip = async () => {
+    if (!controlledBus) return;
+    try {
+      await axios.patch(`/api/buses/${controlledBus.id}`, { isLive: false });
+      updateBusFromFeed(controlledBus.id, { isLive: false });
+      endTrip();
+    } catch {
+      pushNotification("Could not end trip on the server.", "error");
+    }
+  };
 
   if (loadState === "loading") {
     return (
@@ -128,7 +151,7 @@ export function DriverInterface() {
         <div className="grid gap-3 sm:grid-cols-2">
           <button
             type="button"
-            onClick={startTrip}
+            onClick={() => void handleStartTrip()}
             className="flex min-h-[4.5rem] items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-base font-semibold text-white transition hover:bg-emerald-500"
           >
             <Play className="h-5 w-5 shrink-0" />
@@ -136,7 +159,7 @@ export function DriverInterface() {
           </button>
           <button
             type="button"
-            onClick={endTrip}
+            onClick={() => void handleEndTrip()}
             className="flex min-h-[4.5rem] items-center justify-center gap-2 rounded-2xl bg-red-600 px-4 py-3 text-base font-semibold text-white transition hover:bg-red-500"
           >
             <Square className="h-5 w-5 shrink-0" />
@@ -166,15 +189,15 @@ export function DriverInterface() {
 
       <aside className="space-y-4">
         <motion.div
-          animate={driverTripActive ? { scale: [1, 1.03, 1] } : { scale: 1 }}
-          transition={{ duration: 1.2, repeat: driverTripActive ? Infinity : 0 }}
+          animate={tripOn ? { scale: [1, 1.03, 1] } : { scale: 1 }}
+          transition={{ duration: 1.2, repeat: tripOn ? Infinity : 0 }}
           className={`rounded-3xl border p-4 shadow-lg ${
-            driverTripActive ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-white"
+            tripOn ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-white"
           }`}
         >
           <p className="text-xs font-medium uppercase text-slate-500">Live Status</p>
-          <p className={`mt-2 text-lg font-bold ${driverTripActive ? "text-emerald-700" : "text-slate-700"}`}>
-            {driverTripActive ? "Trip is Active" : "Trip is Idle"}
+          <p className={`mt-2 text-lg font-bold ${tripOn ? "text-emerald-700" : "text-slate-700"}`}>
+            {tripOn ? "Trip is Active" : "Trip is Idle"}
           </p>
         </motion.div>
 

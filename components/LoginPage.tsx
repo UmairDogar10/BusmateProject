@@ -45,7 +45,11 @@ export function LoginPage() {
         }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as {
+        error?: string;
+        token?: string;
+        user?: { role?: string };
+      };
 
       if (!response.ok) {
         setError(data.error || "Invalid credentials.");
@@ -54,13 +58,17 @@ export function LoginPage() {
       }
 
       if (selectedRole && data.user?.role !== selectedRole) {
-        setError(`This account is for ${data.user.role}.`);
+        setError(`This account is for ${data.user?.role ?? "another role"}.`);
         setIsLoading(false);
         return;
       }
 
-      const rolePath = `/${data.user.role}`;
-      // Full navigation: cookie is set on the login response; Edge middleware needs a real request with jose-verified JWT (jsonwebtoken breaks in Edge).
+      if (data.token && typeof window !== "undefined") {
+        const { setClientAuthToken } = await import("@/lib/clientAuthToken");
+        setClientAuthToken(data.token);
+      }
+
+      const rolePath = `/${data.user?.role}`;
       window.location.assign(rolePath);
     } catch {
       setError("Unable to login. Please try again.");

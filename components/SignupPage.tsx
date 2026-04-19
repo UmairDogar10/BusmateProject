@@ -55,7 +55,11 @@ export function SignupPage() {
         }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as {
+        error?: string;
+        token?: string;
+        user?: { role?: string };
+      };
 
       if (!response.ok) {
         setError(data.error || "Signup failed. Please try again.");
@@ -63,7 +67,12 @@ export function SignupPage() {
         return;
       }
 
-      window.location.assign(`/${data.user.role}`);
+      if (data.token && typeof window !== "undefined") {
+        const { setClientAuthToken } = await import("@/lib/clientAuthToken");
+        setClientAuthToken(data.token);
+      }
+
+      window.location.assign(`/${data.user?.role}`);
     } catch {
       setError("Signup failed. Please try again.");
       setIsLoading(false);

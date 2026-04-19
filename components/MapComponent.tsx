@@ -1,8 +1,9 @@
 "use client";
 
 import "leaflet/dist/leaflet.css";
-import { MapContainer, TileLayer, CircleMarker, Popup, Polyline } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet";
 import type { Bus } from "@/types/busmate";
+import { getBusLeafletIcon } from "@/lib/busLeafletIcon";
 
 type MapComponentProps = {
   buses: Bus[];
@@ -25,25 +26,25 @@ export function MapComponent({ buses }: MapComponentProps) {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         {routePath.length > 1 && <Polyline positions={routePath} pathOptions={{ color: "#3b82f6", weight: 4 }} />}
-        {buses.map((bus) => (
-          <CircleMarker
-            key={bus.id}
-            center={[bus.position.lat, bus.position.lng]}
-            radius={8}
-            pathOptions={{
-              color: "#fff",
-              weight: 2,
-              fillOpacity: 1,
-              fillColor: bus.isLive ? "#10b981" : "#ef4444",
-            }}
-          >
-            <Popup>
-              <p className="font-semibold">{bus.name}</p>
-              <p>{bus.route}</p>
-              <p>ETA: {bus.eta} min</p>
-            </Popup>
-          </CircleMarker>
-        ))}
+        {buses.map((bus) => {
+          const routeTitle = bus.routeName ?? bus.name;
+          const driver = bus.driverName ?? "—";
+          return (
+            <Marker
+              key={bus.id}
+              position={[bus.position.lat, bus.position.lng]}
+              icon={getBusLeafletIcon(bus.isLive)}
+            >
+              <Popup>
+                <div className="min-w-[200px] space-y-1 text-slate-900">
+                  <p className="text-sm font-semibold leading-tight">Route: {routeTitle}</p>
+                  <p className="text-sm text-slate-800">Driver: {driver}</p>
+                  <p className="text-sm text-slate-800">Available seats: {bus.seatsAvailable}</p>
+                </div>
+              </Popup>
+            </Marker>
+          );
+        })}
       </MapContainer>
     </div>
   );

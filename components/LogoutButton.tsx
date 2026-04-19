@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { clearClientAuthToken } from "@/lib/clientAuthToken";
 
 export function LogoutButton() {
   const router = useRouter();
@@ -9,10 +10,12 @@ export function LogoutButton() {
 
   const handleLogout = async () => {
     setIsLoading(true);
+    clearClientAuthToken();
 
     try {
       await fetch("/api/auth/logout", {
         method: "POST",
+        credentials: "include",
       });
     } catch (error) {
       console.error("Logout failed", error);

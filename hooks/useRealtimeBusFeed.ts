@@ -76,7 +76,6 @@ export const useRealtimeBusFeed = () => {
         const nextEta = Math.max(2, bus.eta + Math.floor(Math.random() * 3) - 1);
         updateBusFromFeed(bus.id, {
           eta: nextEta,
-          isLive: Math.random() > 0.08,
           position: {
             x: nextX,
             y: nextY,

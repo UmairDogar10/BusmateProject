@@ -14,15 +14,28 @@ export async function PATCH(
     }
 
     const body = (await request.json()) as Record<string, unknown>;
-    const seatCount = body.seatCount ?? body.seatsAvailable;
-    if (typeof seatCount !== "number" || Number.isNaN(seatCount) || seatCount < 0) {
-      return NextResponse.json({ error: "seatCount must be a non-negative number." }, { status: 400 });
+    const $set: Record<string, unknown> = {};
+
+    const seatRaw = body.seatCount ?? body.seatsAvailable;
+    if (typeof seatRaw === "number" && !Number.isNaN(seatRaw) && seatRaw >= 0) {
+      $set.seatsAvailable = Math.floor(seatRaw);
+    }
+
+    if (typeof body.isLive === "boolean") {
+      $set.isLive = body.isLive;
+    }
+
+    if (Object.keys($set).length === 0) {
+      return NextResponse.json(
+        { error: "Provide seatCount (or seatsAvailable) and/or isLive." },
+        { status: 400 },
+      );
     }
 
     await dbConnect();
     const updated = await BusModel.findOneAndUpdate(
       busFilter(busId),
-      { $set: { seatsAvailable: Math.floor(seatCount) } },
+      { $set },
       { new: true, runValidators: true },
     ).lean();
 

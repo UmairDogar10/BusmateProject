@@ -26,13 +26,23 @@ export async function verifyToken(token: string): Promise<JWTPayload | null> {
   }
 }
 
+/** Prefer `Authorization: Bearer` (per-tab); fall back to cookie for older sessions. */
+export function getTokenFromRequest(request: NextRequest): string | undefined {
+  const auth = request.headers.get("authorization");
+  if (auth?.startsWith("Bearer ")) {
+    const t = auth.slice(7).trim();
+    if (t) return t;
+  }
+  return request.cookies.get("token")?.value ?? undefined;
+}
+
 export async function getCurrentUser(
   request: NextRequest,
 ): Promise<AuthResult> {
   try {
     await dbConnect();
 
-    const token = request.cookies.get("token")?.value;
+    const token = getTokenFromRequest(request);
 
     if (!token) {
       return { user: null, error: "No token provided" };

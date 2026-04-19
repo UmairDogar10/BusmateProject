@@ -22,6 +22,10 @@ type BusMateState = {
   updateSeatAvailability: (busId: string, seats: number) => void;
   updateBusFromFeed: (busId: string, payload: Partial<Bus>) => void;
   pushNotification: (message: string, type?: NotificationType) => void;
+  /** Merge server-persisted broadcasts without duplicating ids (student portal polling). */
+  mergeBroadcastNotifications: (
+    items: Array<{ id: string; message: string; type: NotificationType; createdAt: number }>,
+  ) => void;
   dismissNotification: (id: string) => void;
 };
 
@@ -75,8 +79,27 @@ export const useBusMateStore = create<BusMateState>((set) => ({
         notifications: [
           { id, message, type, createdAt: Date.now() },
           ...state.notifications,
-        ].slice(0, 5),
+        ].slice(0, 15),
       };
+    }),
+  mergeBroadcastNotifications: (items) =>
+    set((state) => {
+      if (items.length === 0) return state;
+      const existing = new Set(state.notifications.map((n) => n.id));
+      const incoming = items.filter((i) => !existing.has(i.id));
+      if (incoming.length === 0) return state;
+      const next = [
+        ...incoming.map((i) => ({
+          id: i.id,
+          message: i.message,
+          type: i.type,
+          createdAt: i.createdAt,
+        })),
+        ...state.notifications,
+      ]
+        .sort((a, b) => b.createdAt - a.createdAt)
+        .slice(0, 15);
+      return { notifications: next };
     }),
   dismissNotification: (id) =>
     set((state) => ({

@@ -172,6 +172,24 @@ export function AdminDashboard() {
     }
   };
 
+  const handleSendBroadcast = async () => {
+    if (broadcast.trim().length < 5) {
+      setBroadcastError("Broadcast message must be at least 5 characters.");
+      return;
+    }
+    setBroadcastError("");
+    try {
+      await axios.post("/api/admin/broadcast", {
+        message: broadcast.trim(),
+        type: "info",
+      });
+      pushNotification(`Broadcast sent: ${broadcast.trim()}`, "success");
+      setBroadcast("");
+    } catch {
+      pushNotification("Could not send broadcast.", "error");
+    }
+  };
+
   return (
     <div className="space-y-4">
       <section className="grid gap-3 md:grid-cols-3">
@@ -196,18 +214,18 @@ export function AdminDashboard() {
                 value={newRoute}
                 onChange={(event) => setNewRoute(event.target.value)}
                 placeholder="Route name"
-                className="min-w-[140px] flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-700"
+                className="min-w-[140px] flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-blue-700"
               />
               <input
                 value={newDriver}
                 onChange={(event) => setNewDriver(event.target.value)}
                 placeholder="Driver"
-                className="min-w-[120px] flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-700"
+                className="min-w-[120px] flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-blue-700"
               />
               <select
                 value={newStatus}
                 onChange={(event) => setNewStatus(event.target.value as "active" | "offline")}
-                className="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-700"
+                className="rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-700"
               >
                 <option value="active">Active</option>
                 <option value="offline">Offline</option>
@@ -256,14 +274,14 @@ export function AdminDashboard() {
                       <td className="max-w-[8rem] truncate py-2 pr-2 font-medium text-slate-700" title={row.routeId}>
                         {row.routeId}
                       </td>
-                      <td className="py-2 pr-2">{row.name}</td>
-                      <td className="py-2 pr-2 text-slate-600">{row.driver}</td>
+                      <td className="py-2 pr-2 font-medium text-slate-900">{row.name}</td>
+                      <td className="py-2 pr-2 text-slate-900">{row.driver}</td>
                       <td className="py-2 pr-2">
                         <select
                           value={row.assignedDriverId ?? ""}
                           disabled={!row.busId || assigningBusId === row.busId}
                           onChange={(e) => void handleAssignDriver(row, e.target.value)}
-                          className="w-full min-w-[10rem] max-w-[14rem] rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs outline-none focus:border-blue-700 disabled:cursor-not-allowed disabled:bg-slate-100"
+                          className="w-full min-w-[10rem] max-w-[14rem] rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-900 outline-none focus:border-blue-700 disabled:cursor-not-allowed disabled:bg-slate-100"
                           aria-label={`Assign driver for ${row.name}`}
                         >
                           <option value="">
@@ -326,19 +344,11 @@ export function AdminDashboard() {
               onChange={(event) => setBroadcast(event.target.value)}
               rows={3}
               placeholder="Send system-wide update..."
-              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-600"
+              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-emerald-600"
             />
             <button
               type="button"
-              onClick={() => {
-                if (broadcast.trim().length < 5) {
-                  setBroadcastError("Broadcast message must be at least 5 characters.");
-                  return;
-                }
-                pushNotification(`Admin Broadcast: ${broadcast.trim()}`, "info");
-                setBroadcast("");
-                setBroadcastError("");
-              }}
+              onClick={() => void handleSendBroadcast()}
               className="mt-3 w-full rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-500"
             >
               Send Broadcast

@@ -77,22 +77,14 @@ export async function POST(request: NextRequest) {
       createdAt: user.createdAt,
     };
 
-    const response = NextResponse.json(
+    return NextResponse.json(
       {
         message: "User created successfully",
+        token,
         user: userResponse,
       },
       { status: 201 },
     );
-
-    response.cookies.set("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 60 * 60 * 24 * 7,
-    });
-
-    return response;
   } catch (error: unknown) {
     console.error("Registration error:", error);
 
