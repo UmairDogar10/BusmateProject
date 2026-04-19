@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { BellRing, Clock3, Search, Users } from "lucide-react";
 import { useBusMateStore } from "@/store/useBusMateStore";
 import { LiveMap } from "@/components/LiveMap";
+import { useStudentLiveNotifications } from "@/hooks/useStudentLiveNotifications";
 import type { NotificationType } from "@/types/busmate";
 
 const toastTone = {
@@ -25,6 +26,8 @@ type ActiveRouteRow = {
   isActive: boolean;
   /** True when the assigned bus has an active trip (driver pressed Start Trip) */
   tripInProgress: boolean;
+  /** True when the assigned bus has GPS sharing enabled in MongoDB */
+  isGpsActive?: boolean;
   seatsAvailable: number;
   eta?: number;
 };
@@ -36,10 +39,26 @@ function normalizeSeatCount(value: unknown): number {
   return 0;
 }
 
+function formatNotificationTime(ts: number): string {
+  const diffMs = Date.now() - ts;
+  const sec = Math.floor(diffMs / 1000);
+  if (sec < 45) return "Just now";
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min} min ago`;
+  const d = new Date(ts);
+  return d.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 export function StudentPortal() {
   const buses = useBusMateStore((state) => state.buses);
   const notifications = useBusMateStore((state) => state.notifications);
   const dismissNotification = useBusMateStore((state) => state.dismissNotification);
+  const clearAllNotifications = useBusMateStore((state) => state.clearAllNotifications);
   const mergeBroadcastNotifications = useBusMateStore((state) => state.mergeBroadcastNotifications);
 
   const [routes, setRoutes] = useState<ActiveRouteRow[]>([]);
@@ -58,6 +77,7 @@ export function StudentPortal() {
         driver: String(r.driver ?? "Unassigned"),
         isActive: Boolean(r.isActive),
         tripInProgress: Boolean(r.tripInProgress),
+        isGpsActive: Boolean(r.isGpsActive),
         seatsAvailable: normalizeSeatCount(r.seatsAvailable),
         eta: typeof r.etaFromBus === "number" ? r.etaFromBus : undefined,
       }));
@@ -120,6 +140,7 @@ export function StudentPortal() {
         routeName: r?.name ?? bus.routeName ?? bus.name,
         driverName: r?.driver ?? bus.driverName ?? "—",
         isLive: typeof tripFromServer === "boolean" ? tripFromServer : bus.isLive,
+        isGpsActive: r ? Boolean(r.isGpsActive) : Boolean(bus.isGpsActive),
       };
     });
   }, [buses, routes]);
@@ -143,6 +164,8 @@ export function StudentPortal() {
     }
     return map;
   }, [buses, routes]);
+
+  useStudentLiveNotifications(routes, buses, liveSeatsByRouteId);
 
   const seatLabelForRoute = (route: ActiveRouteRow) => {
     const live = liveSeatsByRouteId.get(route.id);
@@ -247,15 +270,27 @@ export function StudentPortal() {
         </div>
 
         <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-lg md:p-5">
-          <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-800">
-            <BellRing className="h-4 w-4 shrink-0 text-blue-700" />
-            Notification Center
-          </h3>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h3 className="flex items-center gap-2 text-base font-semibold text-slate-800">
+              <BellRing className="h-4 w-4 shrink-0 text-blue-700" />
+              Notification Center
+            </h3>
+            {notifications.length > 0 && (
+              <button
+                type="button"
+                onClick={() => clearAllNotifications()}
+                className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50"
+              >
+                Clear All
+              </button>
+            )}
+          </div>
           <AnimatePresence>
             <div className="space-y-2">
               {notifications.length === 0 && (
                 <p className="rounded-xl border border-dashed border-slate-200 p-3 text-xs text-slate-600">
-                  No alerts yet. Admin broadcasts and FCM notifications appear here.
+                  No alerts yet. Trip updates, delays, full buses, admin broadcasts, and push alerts appear
+                  here.
                 </p>
               )}
               {notifications.map((alert) => (
@@ -269,6 +304,9 @@ export function StudentPortal() {
                   onClick={() => dismissNotification(alert.id)}
                   className={`w-full rounded-xl border p-3 text-left text-xs ${toastTone[alert.type]}`}
                 >
+                  <span className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-slate-500/90">
+                    {formatNotificationTime(alert.createdAt)}
+                  </span>
                   {alert.message}
                 </motion.button>
               ))}

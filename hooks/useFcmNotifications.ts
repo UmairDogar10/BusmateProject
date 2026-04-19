@@ -6,23 +6,11 @@ import { useBusMateStore } from "@/store/useBusMateStore";
 import { env, hasFirebaseMessagingConfig } from "@/lib/env";
 import { getFirebaseMessaging } from "@/lib/firebase";
 
-const alerts = [
-  { message: "Route R-200 delayed by 5 minutes due to traffic.", type: "warning" as const },
-  { message: "Campus Loop A reached Main Gate.", type: "success" as const },
-  { message: "Network sync restored. Live feed is healthy.", type: "info" as const },
-];
-
 export const useFcmNotifications = () => {
   const pushNotification = useBusMateStore((state) => state.pushNotification);
 
   useEffect(() => {
     let unsubscribe: () => void = () => {};
-
-    const fallbackInterval = setInterval(() => {
-      if (hasFirebaseMessagingConfig || Math.random() < 0.55) return;
-      const alert = alerts[Math.floor(Math.random() * alerts.length)];
-      pushNotification(alert.message, alert.type);
-    }, 6500);
 
     const setupMessaging = async () => {
       if (!hasFirebaseMessagingConfig || !("Notification" in window)) return;
@@ -56,7 +44,6 @@ export const useFcmNotifications = () => {
 
     void setupMessaging();
     return () => {
-      clearInterval(fallbackInterval);
       unsubscribe();
     };
   }, [pushNotification]);

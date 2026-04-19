@@ -11,12 +11,10 @@ type BusMateState = {
   buses: Bus[];
   notifications: BusNotification[];
   driverTripActive: boolean;
-  gpsActive: boolean;
   loadingAdminTable: boolean;
   setLoadingAdminTable: (value: boolean) => void;
   startTrip: () => void;
   endTrip: () => void;
-  setGpsActive: (value: boolean) => void;
   /** Insert or replace a bus by `id` (used when hydrating driver assignment from the API). */
   upsertBus: (bus: Bus) => void;
   updateSeatAvailability: (busId: string, seats: number) => void;
@@ -27,18 +25,17 @@ type BusMateState = {
     items: Array<{ id: string; message: string; type: NotificationType; createdAt: number }>,
   ) => void;
   dismissNotification: (id: string) => void;
+  clearAllNotifications: () => void;
 };
 
 export const useBusMateStore = create<BusMateState>((set) => ({
   buses: initialBuses,
   notifications: [],
   driverTripActive: false,
-  gpsActive: true,
   loadingAdminTable: true,
   setLoadingAdminTable: (value) => set({ loadingAdminTable: value }),
   startTrip: () => set({ driverTripActive: true }),
   endTrip: () => set({ driverTripActive: false }),
-  setGpsActive: (value) => set({ gpsActive: value }),
   upsertBus: (bus) =>
     set((state) => {
       const idx = state.buses.findIndex((b) => b.id === bus.id);
@@ -105,4 +102,5 @@ export const useBusMateStore = create<BusMateState>((set) => ({
     set((state) => ({
       notifications: state.notifications.filter((item) => item.id !== id),
     })),
+  clearAllNotifications: () => set({ notifications: [] }),
 }));

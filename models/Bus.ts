@@ -7,6 +7,8 @@ export interface IBus extends Document {
   seatsAvailable: number;
   totalSeats: number;
   isLive: boolean;
+  /** When true, students may see this bus on the live map. */
+  isGpsActive: boolean;
   position: {
     lat: number;
     lng: number;
@@ -48,6 +50,10 @@ const BusSchema: Schema = new Schema(
       default: 50,
     },
     isLive: {
+      type: Boolean,
+      default: false,
+    },
+    isGpsActive: {
       type: Boolean,
       default: false,
     },

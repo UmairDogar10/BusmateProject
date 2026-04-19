@@ -5,13 +5,13 @@ import { useBusMateStore } from "../store/useBusMateStore";
 export function DriverInterface() {
   const buses = useBusMateStore((state) => state.buses);
   const driverTripActive = useBusMateStore((state) => state.driverTripActive);
-  const gpsActive = useBusMateStore((state) => state.gpsActive);
   const startTrip = useBusMateStore((state) => state.startTrip);
   const endTrip = useBusMateStore((state) => state.endTrip);
-  const setGpsActive = useBusMateStore((state) => state.setGpsActive);
   const updateSeatAvailability = useBusMateStore((state) => state.updateSeatAvailability);
+  const updateBusFromFeed = useBusMateStore((state) => state.updateBusFromFeed);
 
   const controlledBus = buses[0];
+  const gpsSharing = Boolean(controlledBus?.isGpsActive);
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
@@ -28,7 +28,10 @@ export function DriverInterface() {
           </button>
           <button
             type="button"
-            onClick={endTrip}
+            onClick={() => {
+              updateBusFromFeed(controlledBus.id, { isGpsActive: false });
+              endTrip();
+            }}
             className="flex min-h-20 items-center justify-center gap-2 rounded-2xl bg-red-600 px-4 py-3 text-base font-semibold text-white transition hover:bg-red-500"
           >
             <Square className="h-5 w-5" />
@@ -87,23 +90,25 @@ export function DriverInterface() {
 
         <div
           className={`rounded-3xl border p-4 shadow-lg ${
-            gpsActive ? "border-blue-200 bg-blue-50" : "border-red-200 bg-red-50"
+            gpsSharing ? "border-blue-200 bg-blue-50" : "border-red-200 bg-red-50"
           }`}
         >
           <p className="text-xs font-medium uppercase text-slate-500">Status Indicator</p>
           <div className="mt-3 flex items-center justify-between">
             <span className="inline-flex items-center gap-2 text-sm font-medium">
-              <LocateFixed className={`h-4 w-4 ${gpsActive ? "text-blue-700" : "text-red-700"}`} />
+              <LocateFixed className={`h-4 w-4 ${gpsSharing ? "text-blue-700" : "text-red-700"}`} />
               GPS location sharing
             </span>
             <button
               type="button"
-              onClick={() => setGpsActive(!gpsActive)}
+              onClick={() =>
+                updateBusFromFeed(controlledBus.id, { isGpsActive: !gpsSharing })
+              }
               className={`rounded-xl px-3 py-1 text-xs font-semibold text-white ${
-                gpsActive ? "bg-blue-700" : "bg-red-600"
+                gpsSharing ? "bg-blue-700" : "bg-red-600"
               }`}
             >
-              {gpsActive ? "Active" : "Inactive"}
+              {gpsSharing ? "Active" : "Inactive"}
             </button>
           </div>
         </div>

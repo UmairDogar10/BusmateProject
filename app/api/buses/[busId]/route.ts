@@ -25,9 +25,13 @@ export async function PATCH(
       $set.isLive = body.isLive;
     }
 
+    if (typeof body.isGpsActive === "boolean") {
+      $set.isGpsActive = body.isGpsActive;
+    }
+
     if (Object.keys($set).length === 0) {
       return NextResponse.json(
-        { error: "Provide seatCount (or seatsAvailable) and/or isLive." },
+        { error: "Provide seatCount, isLive, and/or isGpsActive." },
         { status: 400 },
       );
     }

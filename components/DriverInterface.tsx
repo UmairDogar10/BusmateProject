@@ -16,10 +16,8 @@ type AssignmentApi = {
 
 export function DriverInterface() {
   const buses = useBusMateStore((state) => state.buses);
-  const gpsActive = useBusMateStore((state) => state.gpsActive);
   const startTrip = useBusMateStore((state) => state.startTrip);
   const endTrip = useBusMateStore((state) => state.endTrip);
-  const setGpsActive = useBusMateStore((state) => state.setGpsActive);
   const updateSeatAvailability = useBusMateStore((state) => state.updateSeatAvailability);
   const upsertBus = useBusMateStore((state) => state.upsertBus);
   const updateBusFromFeed = useBusMateStore((state) => state.updateBusFromFeed);
@@ -93,11 +91,27 @@ export function DriverInterface() {
   const handleEndTrip = async () => {
     if (!controlledBus) return;
     try {
-      await axios.patch(`/api/buses/${controlledBus.id}`, { isLive: false });
-      updateBusFromFeed(controlledBus.id, { isLive: false });
+      await axios.patch(`/api/buses/${controlledBus.id}`, {
+        isLive: false,
+        isGpsActive: false,
+      });
+      updateBusFromFeed(controlledBus.id, { isLive: false, isGpsActive: false });
       endTrip();
     } catch {
       pushNotification("Could not end trip on the server.", "error");
+    }
+  };
+
+  const gpsSharing = Boolean(controlledBus?.isGpsActive);
+
+  const handleGpsToggle = async () => {
+    if (!controlledBus) return;
+    const next = !gpsSharing;
+    try {
+      await axios.patch(`/api/buses/${controlledBus.id}`, { isGpsActive: next });
+      updateBusFromFeed(controlledBus.id, { isGpsActive: next });
+    } catch {
+      pushNotification("Could not update GPS sharing on the server.", "error");
     }
   };
 
@@ -203,23 +217,23 @@ export function DriverInterface() {
 
         <div
           className={`rounded-3xl border p-4 shadow-lg ${
-            gpsActive ? "border-blue-200 bg-blue-50" : "border-red-200 bg-red-50"
+            gpsSharing ? "border-blue-200 bg-blue-50" : "border-red-200 bg-red-50"
           }`}
         >
           <p className="text-xs font-medium uppercase text-slate-500">Status Indicator</p>
           <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <span className="inline-flex items-center gap-2 text-sm font-medium">
-              <LocateFixed className={`h-4 w-4 shrink-0 ${gpsActive ? "text-blue-700" : "text-red-700"}`} />
+              <LocateFixed className={`h-4 w-4 shrink-0 ${gpsSharing ? "text-blue-700" : "text-red-700"}`} />
               GPS location sharing
             </span>
             <button
               type="button"
-              onClick={() => setGpsActive(!gpsActive)}
+              onClick={() => void handleGpsToggle()}
               className={`w-full rounded-xl px-3 py-2 text-xs font-semibold text-white sm:w-auto ${
-                gpsActive ? "bg-blue-700" : "bg-red-600"
+                gpsSharing ? "bg-blue-700" : "bg-red-600"
               }`}
             >
-              {gpsActive ? "Active" : "Inactive"}
+              {gpsSharing ? "Active" : "Inactive"}
             </button>
           </div>
         </div>

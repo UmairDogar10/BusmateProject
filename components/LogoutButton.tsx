@@ -1,5 +1,6 @@
 "use client";
 
+import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { clearClientAuthToken } from "@/lib/clientAuthToken";
@@ -10,6 +11,7 @@ export function LogoutButton() {
 
   const handleLogout = async () => {
     setIsLoading(true);
+    await axios.post("/api/driver/deactivate-gps").catch(() => undefined);
     clearClientAuthToken();
 
     try {

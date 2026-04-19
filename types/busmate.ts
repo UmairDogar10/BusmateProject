@@ -16,6 +16,8 @@ export type Bus = {
   totalSeats?: number;
   /** True when the driver has started a trip (synced to MongoDB `isLive`) */
   isLive: boolean;
+  /** True when the driver enables GPS sharing (synced to MongoDB `isGpsActive`) */
+  isGpsActive?: boolean;
   position: {
     x: number;
     y: number;

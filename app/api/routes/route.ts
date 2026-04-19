@@ -14,18 +14,22 @@ export async function GET(request: Request) {
     const rows = await Promise.all(
       routeDocs.map(async (route) => {
         const rid = String(route._id);
-        const bus = await BusModel.findOne({ routeId: rid }).select("seatsAvailable eta isLive").lean();
+        const bus = await BusModel.findOne({ routeId: rid })
+          .select("seatsAvailable eta isLive isGpsActive")
+          .lean();
         const seatsAvailable =
           typeof bus?.seatsAvailable === "number" && !Number.isNaN(bus.seatsAvailable)
             ? bus.seatsAvailable
             : 0;
         const eta = typeof bus?.eta === "number" ? bus.eta : undefined;
         const tripInProgress = Boolean(bus?.isLive);
+        const isGpsActive = Boolean(bus?.isGpsActive);
         return {
           ...route,
           seatsAvailable,
           etaFromBus: eta,
           tripInProgress,
+          isGpsActive,
         };
       }),
     );

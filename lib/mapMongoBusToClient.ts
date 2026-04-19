@@ -9,6 +9,7 @@ export type MongoBusLean = {
   seatsAvailable: number;
   totalSeats?: number;
   isLive: boolean;
+  isGpsActive?: boolean;
   position: { lat: number; lng: number };
   routeId?: string;
 };
@@ -22,6 +23,7 @@ export function mapMongoBusToClient(doc: MongoBusLean): Bus {
     eta: doc.eta,
     seatsAvailable: doc.seatsAvailable,
     isLive: Boolean(doc.isLive),
+    isGpsActive: Boolean(doc.isGpsActive),
     routeId: doc.routeId,
     totalSeats: doc.totalSeats,
     position: {

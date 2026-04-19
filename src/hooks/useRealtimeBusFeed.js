@@ -10,9 +10,13 @@ const normalizeIncomingBus = (payload, fallbackBus) => {
   const isLiveFromPayload =
     payload?.isLive ?? (payload?.status ? payload.status === "live" : undefined);
 
+  const isGpsFromPayload =
+    typeof payload?.isGpsActive === "boolean" ? payload.isGpsActive : undefined;
+
   return {
     eta: payload?.eta ?? fallbackBus.eta,
     isLive: isLiveFromPayload ?? fallbackBus.isLive,
+    isGpsActive: isGpsFromPayload ?? fallbackBus.isGpsActive,
     position: {
       x:
         payload?.position?.x ??
@@ -63,9 +67,7 @@ export const useRealtimeBusFeed = () => {
 
     const socket = new WebSocket(env.websocketUrl);
 
-    socket.addEventListener("open", () => {
-      pushNotification("WebSocket connected. Live bus tracking started.", "success");
-    });
+    socket.addEventListener("open", () => {});
 
     socket.addEventListener("message", (event) => {
       try {
@@ -83,13 +85,9 @@ export const useRealtimeBusFeed = () => {
       }
     });
 
-    socket.addEventListener("close", () => {
-      pushNotification("WebSocket disconnected. Reverting to local simulation.", "warning");
-    });
+    socket.addEventListener("close", () => {});
 
-    socket.addEventListener("error", () => {
-      pushNotification("WebSocket connection error.", "error");
-    });
+    socket.addEventListener("error", () => {});
 
     return () => {
       socket.close();

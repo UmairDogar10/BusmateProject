@@ -8,6 +8,7 @@ export const initialBuses = [
     eta: 6,
     seatsAvailable: 18,
     isLive: false,
+    isGpsActive: false,
     position: { x: 14, y: 45, lat: 31.5204, lng: 74.3587 },
   },
   {
@@ -19,6 +20,7 @@ export const initialBuses = [
     eta: 11,
     seatsAvailable: 7,
     isLive: false,
+    isGpsActive: false,
     position: { x: 48, y: 30, lat: 31.5223, lng: 74.3615 },
   },
   {
@@ -30,6 +32,7 @@ export const initialBuses = [
     eta: 15,
     seatsAvailable: 3,
     isLive: false,
+    isGpsActive: false,
     position: { x: 72, y: 66, lat: 31.5181, lng: 74.3542 },
   },
 ];

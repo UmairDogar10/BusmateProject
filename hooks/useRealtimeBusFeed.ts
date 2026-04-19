@@ -41,6 +41,7 @@ function normalizeFeedItem(item: Record<string, unknown>): Partial<Bus> {
       ...(rest as Partial<Bus>),
       eta: typeof rest.eta === "number" ? rest.eta : undefined,
       isLive: typeof rest.isLive === "boolean" ? rest.isLive : undefined,
+      isGpsActive: typeof rest.isGpsActive === "boolean" ? rest.isGpsActive : undefined,
       position: {
         ...basePos,
         lat: Number(latN),
@@ -92,9 +93,7 @@ export const useRealtimeBusFeed = () => {
     if (!websocketUrl) return;
 
     const socket = new WebSocket(websocketUrl);
-    socket.addEventListener("open", () =>
-      pushNotification("WebSocket connected. Live bus tracking started.", "success"),
-    );
+    socket.addEventListener("open", () => {});
     socket.addEventListener("message", (event) => {
       try {
         const parsed: unknown = JSON.parse(event.data);
@@ -111,10 +110,8 @@ export const useRealtimeBusFeed = () => {
         pushNotification("Received malformed live tracking payload.", "error");
       }
     });
-    socket.addEventListener("close", () =>
-      pushNotification("WebSocket disconnected. Reverting to local simulation.", "warning"),
-    );
-    socket.addEventListener("error", () => pushNotification("WebSocket connection error.", "error"));
+    socket.addEventListener("close", () => {});
+    socket.addEventListener("error", () => {});
     return () => socket.close();
   }, [websocketUrl, pushNotification, updateBusFromFeed]);
 };

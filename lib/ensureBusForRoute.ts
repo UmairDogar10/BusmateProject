@@ -29,6 +29,7 @@ export async function ensureBusDocumentForRoute(params: {
     seatsAvailable: 40,
     totalSeats: 50,
     isLive: false,
+    isGpsActive: false,
     position: DEFAULT_POSITION,
     routeId: params.routeId,
   });

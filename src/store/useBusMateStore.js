@@ -7,12 +7,10 @@ export const useBusMateStore = create((set) => ({
   buses: initialBuses,
   notifications: [],
   driverTripActive: false,
-  gpsActive: true,
   loadingAdminTable: true,
   setLoadingAdminTable: (value) => set({ loadingAdminTable: value }),
   startTrip: () => set({ driverTripActive: true }),
   endTrip: () => set({ driverTripActive: false }),
-  setGpsActive: (value) => set({ gpsActive: value }),
   updateSeatAvailability: (busId, seats) =>
     set((state) => ({
       buses: state.buses.map((bus) =>
@@ -27,6 +25,8 @@ export const useBusMateStore = create((set) => ({
               ...bus,
               eta: payload.eta ?? bus.eta,
               isLive: payload.isLive ?? bus.isLive,
+              isGpsActive:
+                typeof payload.isGpsActive === "boolean" ? payload.isGpsActive : bus.isGpsActive,
               position: payload.position ?? bus.position,
             }
           : bus,
@@ -37,10 +37,11 @@ export const useBusMateStore = create((set) => ({
       notifications: [
         { id: crypto.randomUUID(), message, type, createdAt: Date.now() },
         ...state.notifications,
-      ].slice(0, 5),
+      ].slice(0, 15),
     })),
   dismissNotification: (id) =>
     set((state) => ({
       notifications: state.notifications.filter((item) => item.id !== id),
     })),
+  clearAllNotifications: () => set({ notifications: [] }),
 }));
