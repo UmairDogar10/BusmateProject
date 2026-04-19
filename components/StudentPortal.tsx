@@ -1,6 +1,8 @@
 "use client";
 
+import axios from "axios";
 import { AnimatePresence, motion } from "framer-motion";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { BellRing, Clock3, Users } from "lucide-react";
 import { useBusMateStore } from "@/store/useBusMateStore";
 import { LiveMap } from "@/components/LiveMap";
@@ -12,17 +14,84 @@ const toastTone = {
   error: "border-red-200 bg-red-50 text-red-700",
 };
 
+const ROUTE_POLL_MS = 20_000;
+
+type ActiveRouteRow = {
+  id: string;
+  name: string;
+  driver: string;
+  isActive: boolean;
+  seatsAvailable: number;
+  eta?: number;
+};
+
+function normalizeSeatCount(value: unknown): number {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return Math.max(0, Math.floor(value));
+  }
+  return 0;
+}
+
 export function StudentPortal() {
   const buses = useBusMateStore((state) => state.buses);
   const notifications = useBusMateStore((state) => state.notifications);
   const dismissNotification = useBusMateStore((state) => state.dismissNotification);
 
+  const [routes, setRoutes] = useState<ActiveRouteRow[]>([]);
+  const [routesLoading, setRoutesLoading] = useState(true);
+  const [routesError, setRoutesError] = useState<string | null>(null);
+
+  const refreshRoutes = useCallback(async () => {
+    try {
+      const { data } = await axios.get<{ rows: Array<Record<string, unknown>> }>(
+        "/api/routes?active=true",
+      );
+      const mapped: ActiveRouteRow[] = (data.rows ?? []).map((r) => ({
+        id: String(r._id),
+        name: String(r.name ?? "Route"),
+        driver: String(r.driver ?? "Unassigned"),
+        isActive: Boolean(r.isActive),
+        seatsAvailable: normalizeSeatCount(r.seatsAvailable),
+        eta: typeof r.etaFromBus === "number" ? r.etaFromBus : undefined,
+      }));
+      setRoutes(mapped);
+      setRoutesError(null);
+    } catch {
+      setRoutesError("Could not load active routes.");
+      setRoutes([]);
+    } finally {
+      setRoutesLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshRoutes();
+    const timer = setInterval(() => void refreshRoutes(), ROUTE_POLL_MS);
+    return () => clearInterval(timer);
+  }, [refreshRoutes]);
+
+  const liveSeatsByRouteId = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const b of buses) {
+      if (b.routeId) {
+        map.set(b.routeId, normalizeSeatCount(b.seatsAvailable));
+      }
+    }
+    return map;
+  }, [buses]);
+
+  const seatLabelForRoute = (route: ActiveRouteRow) => {
+    const live = liveSeatsByRouteId.get(route.id);
+    const merged = live !== undefined ? live : route.seatsAvailable;
+    return normalizeSeatCount(merged ?? 0);
+  };
+
   return (
     <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
       <section className="relative overflow-hidden rounded-3xl border border-white/20 bg-white/90 p-4 shadow-xl md:p-6">
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-lg font-semibold text-slate-800">Interactive Live Map</h2>
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600">
+          <span className="w-fit rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600">
             OpenStreetMap + Leaflet
           </span>
         </div>
@@ -32,29 +101,74 @@ export function StudentPortal() {
       <aside className="space-y-4">
         <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-lg md:p-5">
           <h3 className="mb-4 flex items-center gap-2 text-base font-semibold text-slate-800">
-            <Clock3 className="h-4 w-4 text-blue-700" />
+            <Clock3 className="h-4 w-4 shrink-0 text-blue-700" />
             ETA Dashboard
           </h3>
+          <p className="mb-3 text-xs text-slate-500">
+            Seat counts sync from MongoDB (per route&apos;s linked bus). Live updates merge from the fleet
+            map when route ids match.
+          </p>
           <div className="space-y-3">
-            {buses.map((bus) => (
-              <div key={bus.id} className="rounded-2xl bg-slate-50 p-3">
-                <p className="text-sm font-semibold text-slate-800">{bus.name}</p>
-                <p className="text-xs text-slate-500">{bus.route}</p>
-                <div className="mt-2 flex items-center justify-between text-xs">
-                  <span className="font-medium text-blue-700">ETA: {bus.eta} min</span>
-                  <span className="inline-flex items-center gap-1 text-emerald-700">
-                    <Users className="h-3.5 w-3.5" />
-                    {bus.seatsAvailable} seats
-                  </span>
-                </div>
+            {routesLoading && (
+              <div className="space-y-2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div
+                    key={`route-skel-${i}`}
+                    className="h-20 animate-pulse rounded-2xl bg-gradient-to-r from-slate-100 via-slate-200 to-slate-100"
+                  />
+                ))}
               </div>
-            ))}
+            )}
+            {!routesLoading && routesError && (
+              <p className="rounded-2xl border border-red-100 bg-red-50 p-3 text-xs text-red-700">
+                {routesError}
+              </p>
+            )}
+            {!routesLoading && !routesError && routes.length === 0 && (
+              <p className="rounded-2xl border border-dashed border-slate-200 p-3 text-xs text-slate-500">
+                No active routes in the database yet.
+              </p>
+            )}
+            {!routesLoading &&
+              !routesError &&
+              routes.map((route) => {
+                const seats = seatLabelForRoute(route);
+                return (
+                  <div
+                    key={route.id}
+                    className="rounded-2xl bg-slate-50 p-3 sm:p-4"
+                  >
+                    <p className="text-sm font-semibold text-slate-800">{route.name}</p>
+                    <p className="text-xs text-slate-500">Driver: {route.driver}</p>
+                    <div className="mt-2 flex flex-col gap-2 text-xs sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className={`inline-flex rounded-full px-2 py-0.5 font-medium ${
+                            route.isActive
+                              ? "bg-emerald-100 text-emerald-800"
+                              : "bg-slate-200 text-slate-600"
+                          }`}
+                        >
+                          {route.isActive ? "Active" : "Offline"}
+                        </span>
+                        {route.eta != null && (
+                          <span className="font-medium text-blue-700">ETA: {route.eta} min</span>
+                        )}
+                      </div>
+                      <span className="inline-flex items-center gap-1 font-semibold text-emerald-800">
+                        <Users className="h-3.5 w-3.5 shrink-0" />
+                        {String(seats)} seats
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
           </div>
         </div>
 
         <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-lg md:p-5">
           <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-800">
-            <BellRing className="h-4 w-4 text-blue-700" />
+            <BellRing className="h-4 w-4 shrink-0 text-blue-700" />
             Notification Center
           </h3>
           <AnimatePresence>

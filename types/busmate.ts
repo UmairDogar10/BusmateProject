@@ -4,6 +4,10 @@ export type Bus = {
   route: string;
   eta: number;
   seatsAvailable: number;
+  /** Matches `Route` document id in MongoDB for ETA/seat sync */
+  routeId?: string;
+  /** Fleet capacity upper bound for occupancy UI */
+  totalSeats?: number;
   isLive: boolean;
   position: {
     x: number;
@@ -36,6 +40,7 @@ export type User = {
 export type Route = {
   id: string;
   name: string;
+  driver?: string;
   description?: string;
   stops: Array<{
     name: string;

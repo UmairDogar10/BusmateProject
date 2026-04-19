@@ -2,6 +2,7 @@ import mongoose, { Document, Schema } from "mongoose";
 
 export interface IRoute extends Document {
   name: string;
+  driver: string;
   description?: string;
   stops: Array<{
     name: string;
@@ -20,6 +21,11 @@ const RouteSchema: Schema = new Schema(
       type: String,
       required: true,
       trim: true,
+    },
+    driver: {
+      type: String,
+      trim: true,
+      default: "Pending Assignment",
     },
     description: {
       type: String,

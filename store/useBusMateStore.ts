@@ -17,6 +17,8 @@ type BusMateState = {
   startTrip: () => void;
   endTrip: () => void;
   setGpsActive: (value: boolean) => void;
+  /** Insert or replace a bus by `id` (used when hydrating driver assignment from the API). */
+  upsertBus: (bus: Bus) => void;
   updateSeatAvailability: (busId: string, seats: number) => void;
   updateBusFromFeed: (busId: string, payload: Partial<Bus>) => void;
   pushNotification: (message: string, type?: NotificationType) => void;
@@ -33,19 +35,34 @@ export const useBusMateStore = create<BusMateState>((set) => ({
   startTrip: () => set({ driverTripActive: true }),
   endTrip: () => set({ driverTripActive: false }),
   setGpsActive: (value) => set({ gpsActive: value }),
+  upsertBus: (bus) =>
+    set((state) => {
+      const idx = state.buses.findIndex((b) => b.id === bus.id);
+      if (idx === -1) {
+        return { buses: [...state.buses, bus] };
+      }
+      const next = [...state.buses];
+      next[idx] = { ...next[idx], ...bus };
+      return { buses: next };
+    }),
   updateSeatAvailability: (busId, seats) =>
     set((state) => ({
-      buses: state.buses.map((bus) =>
-        bus.id === busId
-          ? { ...bus, seatsAvailable: clamp(seats, 0, 40) }
-          : bus,
-      ),
+      buses: state.buses.map((bus) => {
+        if (bus.id !== busId) return bus;
+        const cap = bus.totalSeats ?? 40;
+        return { ...bus, seatsAvailable: clamp(seats, 0, cap) };
+      }),
     })),
   updateBusFromFeed: (busId, payload) =>
     set((state) => ({
-      buses: state.buses.map((bus) =>
-        bus.id === busId ? { ...bus, ...payload } : bus,
-      ),
+      buses: state.buses.map((bus) => {
+        if (bus.id !== busId) return bus;
+        const merged = { ...bus, ...payload };
+        if (payload.position) {
+          merged.position = { ...bus.position, ...payload.position };
+        }
+        return merged;
+      }),
     })),
   pushNotification: (message, type = "info") =>
     set((state) => {

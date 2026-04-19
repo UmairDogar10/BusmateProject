@@ -11,6 +11,8 @@ export interface IBus extends Document {
     lat: number;
     lng: number;
   };
+  /** Stable id used by the client / mock data (e.g. bus-101) when it is not a MongoDB ObjectId */
+  shortId?: string;
   driverId?: mongoose.Types.ObjectId;
   routeId?: string;
   createdAt: Date;
@@ -58,6 +60,13 @@ const BusSchema: Schema = new Schema(
         type: Number,
         required: true,
       },
+    },
+    shortId: {
+      type: String,
+      trim: true,
+      sparse: true,
+      unique: true,
+      index: true,
     },
     driverId: {
       type: Schema.Types.ObjectId,
