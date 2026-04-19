@@ -93,11 +93,16 @@ export async function POST(request: NextRequest) {
     });
 
     return response;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Registration error:", error);
 
-    // Handle duplicate key error
-    if (error.code === 11000) {
+    const isDuplicateKey =
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      (error as { code?: number }).code === 11000;
+
+    if (isDuplicateKey) {
       return NextResponse.json(
         { error: "User already exists" },
         { status: 400 },

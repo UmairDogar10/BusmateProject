@@ -64,7 +64,7 @@ export function SignupPage() {
       }
 
       window.location.assign(`/${data.user.role}`);
-    } catch (err) {
+    } catch {
       setError("Signup failed. Please try again.");
       setIsLoading(false);
     }

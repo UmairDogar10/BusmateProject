@@ -21,7 +21,7 @@ export async function verifyToken(token: string): Promise<JWTPayload | null> {
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
     return decoded;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -49,7 +49,7 @@ export async function getCurrentUser(
     }
 
     return { user, error: null };
-  } catch (error) {
+  } catch {
     return { user: null, error: "Authentication failed" };
   }
 }

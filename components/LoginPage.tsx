@@ -62,7 +62,7 @@ export function LoginPage() {
       const rolePath = `/${data.user.role}`;
       // Full navigation: cookie is set on the login response; Edge middleware needs a real request with jose-verified JWT (jsonwebtoken breaks in Edge).
       window.location.assign(rolePath);
-    } catch (error) {
+    } catch {
       setError("Unable to login. Please try again.");
       setIsLoading(false);
     }
