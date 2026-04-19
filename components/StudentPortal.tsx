@@ -7,7 +7,7 @@ import { BellRing, Clock3, Search, Users } from "lucide-react";
 import { useBusMateStore } from "@/store/useBusMateStore";
 import { LiveMap } from "@/components/LiveMap";
 import { useStudentLiveNotifications } from "@/hooks/useStudentLiveNotifications";
-import type { NotificationType } from "@/types/busmate";
+import type { Bus, NotificationType } from "@/types/busmate";
 
 const toastTone = {
   info: "border-blue-200 bg-blue-50 text-slate-900",
@@ -16,7 +16,8 @@ const toastTone = {
   error: "border-red-200 bg-red-50 text-slate-900",
 };
 
-const ROUTE_POLL_MS = 20_000;
+/** Routes carry live GPS + occupancy; poll often enough that map updates soon after drivers toggle sharing. */
+const ROUTE_POLL_MS = 5_000;
 const BROADCAST_POLL_MS = 12_000;
 
 type ActiveRouteRow = {
@@ -28,6 +29,11 @@ type ActiveRouteRow = {
   tripInProgress: boolean;
   /** True when the assigned bus has GPS sharing enabled in MongoDB */
   isGpsActive?: boolean;
+  /** Client bus id (Mongo shortId or _id) for the vehicle linked to this route */
+  mapBusClientId?: string | null;
+  busPositionLat?: number | null;
+  busPositionLng?: number | null;
+  totalSeatsFromBus?: number;
   seatsAvailable: number;
   eta?: number;
 };
@@ -78,6 +84,16 @@ export function StudentPortal() {
         isActive: Boolean(r.isActive),
         tripInProgress: Boolean(r.tripInProgress),
         isGpsActive: Boolean(r.isGpsActive),
+        mapBusClientId:
+          r.mapBusClientId != null && String(r.mapBusClientId).length > 0
+            ? String(r.mapBusClientId)
+            : null,
+        busPositionLat: typeof r.busPositionLat === "number" ? r.busPositionLat : null,
+        busPositionLng: typeof r.busPositionLng === "number" ? r.busPositionLng : null,
+        totalSeatsFromBus:
+          typeof r.totalSeatsFromBus === "number" && Number.isFinite(r.totalSeatsFromBus)
+            ? Math.floor(r.totalSeatsFromBus)
+            : undefined,
         seatsAvailable: normalizeSeatCount(r.seatsAvailable),
         eta: typeof r.etaFromBus === "number" ? r.etaFromBus : undefined,
       }));
@@ -145,6 +161,55 @@ export function StudentPortal() {
     });
   }, [buses, routes]);
 
+  /**
+   * Real assigned buses live in MongoDB and are not in the student Zustand store.
+   * Build map markers from `/api/routes` (linked bus position + GPS flag), then add
+   * mock-store buses only when they are not already represented for the same route.
+   */
+  const mapBuses = useMemo(() => {
+    const serverMarkers: Bus[] = [];
+    const coveredRouteIds = new Set<string>();
+    const coveredRouteNames = new Set<string>();
+
+    for (const r of routes) {
+      if (!r.isGpsActive) continue;
+      const lat = r.busPositionLat;
+      const lng = r.busPositionLng;
+      if (typeof lat !== "number" || typeof lng !== "number" || !Number.isFinite(lat + lng)) {
+        continue;
+      }
+      coveredRouteIds.add(r.id);
+      coveredRouteNames.add(r.name.trim().toLowerCase());
+
+      const id = r.mapBusClientId ?? `route-bus-${r.id}`;
+      const cap = r.totalSeatsFromBus ?? 50;
+      serverMarkers.push({
+        id,
+        name: r.name,
+        routeName: r.name,
+        route: r.name,
+        routeId: r.id,
+        driverName: r.driver,
+        eta: typeof r.eta === "number" ? r.eta : 0,
+        seatsAvailable: normalizeSeatCount(r.seatsAvailable),
+        totalSeats: cap,
+        isLive: r.tripInProgress,
+        isGpsActive: true,
+        position: { x: 50, y: 50, lat, lng },
+      });
+    }
+
+    const mockLayer = enrichedBuses.filter((b) => {
+      if (b.isGpsActive !== true) return false;
+      if (b.routeId && coveredRouteIds.has(b.routeId)) return false;
+      const label = (b.routeName ?? b.name).trim().toLowerCase();
+      if (coveredRouteNames.has(label)) return false;
+      return true;
+    });
+
+    return [...serverMarkers, ...mockLayer];
+  }, [routes, enrichedBuses]);
+
   const liveSeatsByRouteId = useMemo(() => {
     const map = new Map<string, number>();
     for (const b of buses) {
@@ -182,7 +247,7 @@ export function StudentPortal() {
             OpenStreetMap + Leaflet
           </span>
         </div>
-        <LiveMap buses={enrichedBuses} />
+        <LiveMap buses={mapBuses} />
       </section>
 
       <aside className="space-y-4">

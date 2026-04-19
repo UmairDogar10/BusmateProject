@@ -15,7 +15,7 @@ export async function GET(request: Request) {
       routeDocs.map(async (route) => {
         const rid = String(route._id);
         const bus = await BusModel.findOne({ routeId: rid })
-          .select("seatsAvailable eta isLive isGpsActive")
+          .select("seatsAvailable eta isLive isGpsActive position shortId totalSeats")
           .lean();
         const seatsAvailable =
           typeof bus?.seatsAvailable === "number" && !Number.isNaN(bus.seatsAvailable)
@@ -24,12 +24,36 @@ export async function GET(request: Request) {
         const eta = typeof bus?.eta === "number" ? bus.eta : undefined;
         const tripInProgress = Boolean(bus?.isLive);
         const isGpsActive = Boolean(bus?.isGpsActive);
+        const pos =
+          bus?.position &&
+          typeof bus.position === "object" &&
+          typeof (bus.position as { lat?: unknown }).lat === "number" &&
+          typeof (bus.position as { lng?: unknown }).lng === "number"
+            ? {
+                lat: (bus.position as { lat: number }).lat,
+                lng: (bus.position as { lng: number }).lng,
+              }
+            : null;
+        const mapBusClientId =
+          bus && bus.shortId
+            ? String(bus.shortId)
+            : bus && bus._id != null
+              ? String(bus._id)
+              : null;
+        const totalSeats =
+          typeof bus?.totalSeats === "number" && !Number.isNaN(bus.totalSeats)
+            ? bus.totalSeats
+            : undefined;
         return {
           ...route,
           seatsAvailable,
           etaFromBus: eta,
           tripInProgress,
           isGpsActive,
+          mapBusClientId,
+          busPositionLat: pos?.lat ?? null,
+          busPositionLng: pos?.lng ?? null,
+          totalSeatsFromBus: totalSeats,
         };
       }),
     );
