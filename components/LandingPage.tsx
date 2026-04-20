@@ -46,7 +46,7 @@ function BusIllustration() {
   return (
     <motion.svg
       viewBox="0 0 520 360"
-      className="w-full max-w-xl drop-shadow-[0_28px_60px_rgba(59,130,246,0.35)]"
+      className="w-full max-w-xl drop-shadow-[0_28px_60px_rgba(251,146,60,0.35)]"
       animate={{ y: [0, -14, 0], rotateZ: [0, 1.2, 0], scale: [1, 1.02, 1] }}
       transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
     >
@@ -166,21 +166,21 @@ function BusPulseMap() {
       transition={{ delay: 0.35, duration: 0.45 }}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
-      className="mt-8 rounded-2xl border border-blue-300/20 bg-white/5 p-4 backdrop-blur"
+      className="mt-8 rounded-2xl border border-orange-300/20 bg-white/5 p-4 backdrop-blur"
     >
-      <div className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.14em] text-blue-200">
+      <div className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.14em] text-orange-200">
         <span>Live Preview</span>
-        <span className="inline-flex items-center gap-1 text-[10px] tracking-[0.2em] text-blue-300">
-          <span className="h-2 w-2 rounded-full bg-emerald-300" />
+        <span className="inline-flex items-center gap-1 text-[10px] tracking-[0.2em] text-orange-300">
+          <span className="h-2 w-2 rounded-full bg-orange-300" />
           Real Time
         </span>
       </div>
-      <div className="relative h-28 overflow-hidden rounded-xl bg-[#0b1323]">
+      <div className="relative h-28 overflow-hidden rounded-xl bg-[#07101d]">
         <svg viewBox="0 0 360 120" className="absolute inset-0 h-full w-full">
           <path
             d="M20 82C88 20 170 96 340 40"
             fill="none"
-            stroke="#3b82f6"
+            stroke="#f59e0b"
             strokeOpacity="0.35"
             strokeWidth="6"
             strokeLinecap="round"
@@ -200,16 +200,16 @@ function BusPulseMap() {
           >
             <motion.circle
               r="13"
-              fill="#60a5fa"
+              fill="#fb923c"
               opacity="0.32"
               animate={{ scale: [0.7, 1.7, 0.7], opacity: [0.5, 0.08, 0.5] }}
               transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
             />
-            <circle r="10" fill="#3b82f6" stroke="#bfdbfe" strokeOpacity="0.65" />
+            <circle r="10" fill="#f97316" stroke="#fed7aa" strokeOpacity="0.65" />
           </motion.g>
         </svg>
         <motion.div
-          className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-transparent via-blue-300 to-transparent"
+          className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-transparent via-orange-300 to-transparent"
           animate={{ x: ["-20%", "130%"] }}
           transition={{ duration: isHovered ? 1.1 : 1.8, repeat: Infinity, ease: "linear" }}
           style={{ width: "35%" }}
@@ -247,12 +247,12 @@ function FeatureCard({
       whileHover={{ scale: 1.05, translateY: -10 }}
       transition={{ duration: 0.45, delay }}
       onMouseMove={handleMouseMove}
-      className="relative overflow-hidden rounded-2xl border border-blue-400/20 bg-white/5 p-6 shadow-[0_10px_40px_rgba(15,23,42,0.35)] backdrop-blur"
+      className="relative overflow-hidden rounded-2xl border border-orange-400/20 bg-white/5 p-6 shadow-[0_10px_40px_rgba(15,23,42,0.35)] backdrop-blur"
       style={{
-        backgroundImage: `radial-gradient(circle at ${glowPos.x}% ${glowPos.y}%, rgba(59,130,246,0.24) 0%, rgba(59,130,246,0.08) 20%, rgba(15,23,42,0.1) 60%)`,
+        backgroundImage: `radial-gradient(circle at ${glowPos.x}% ${glowPos.y}%, rgba(251,146,60,0.24) 0%, rgba(251,146,60,0.08) 20%, rgba(15,23,42,0.1) 60%)`,
       }}
     >
-      <div className="mb-4 inline-flex rounded-xl bg-[#3b82f6]/20 p-2 text-blue-200">
+      <div className="mb-4 inline-flex rounded-xl bg-[#fb923c]/20 p-2 text-orange-200">
         <Icon className="h-5 w-5" />
       </div>
       <h3 className="mb-2 text-lg font-semibold text-white">{title}</h3>
@@ -280,7 +280,7 @@ export function LandingPage() {
 
   return (
     <div
-      className="min-h-screen cursor-none bg-[#0f172a] text-slate-100"
+      className="min-h-screen cursor-none bg-[#020617] text-slate-100"
       onMouseEnter={() => setShowCursor(true)}
       onMouseLeave={() => setShowCursor(false)}
       onMouseMove={(event) => setCursorPos({ x: event.clientX, y: event.clientY })}
@@ -296,29 +296,31 @@ export function LandingPage() {
         }}
         transition={{ type: "spring", stiffness: 420, damping: 28, mass: 0.45 }}
       >
-        <div className="relative rounded-full border border-blue-200/70 bg-[#3b82f6] p-2.5 text-white shadow-[0_0_24px_rgba(59,130,246,0.6)]">
+        <div className="relative rounded-full border border-orange-300/70 bg-[#f59e0b] p-2.5 text-slate-950 shadow-[0_0_24px_rgba(245,158,11,0.55)]">
           <motion.div
-            className="absolute -inset-2 rounded-full border border-blue-300/50"
+            className="absolute -inset-2 rounded-full border border-orange-200/50"
             animate={{ scale: [0.95, 1.2, 0.95], opacity: [0.8, 0.25, 0.8] }}
             transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
           />
           <Bus className="relative h-5 w-5" />
         </div>
       </motion.div>
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0f172a]/50 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-orange-500/10 bg-[#020617]/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 md:px-6">
-          <div className="text-xl font-bold text-white">BusMate</div>
+          <div className="flex items-center gap-3">
+            <img src="/LogoBusmate.png" alt="BusMate logo" className="h-10 w-auto object-contain" />
+          </div>
           <motion.a
             href="/login"
             animate={{
               boxShadow: [
-                "0 0 0 rgba(59,130,246,0.00)",
-                "0 0 24px rgba(96,165,250,0.55)",
-                "0 0 0 rgba(59,130,246,0.00)",
+                "0 0 0 rgba(245,158,11,0.00)",
+                "0 0 24px rgba(251,146,60,0.45)",
+                "0 0 0 rgba(245,158,11,0.00)",
               ],
             }}
             transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-            className="group relative inline-flex items-center gap-2 overflow-hidden rounded-xl border border-[#93c5fd]/50 bg-gradient-to-b from-white/50 via-[#93c5fd]/35 to-[#3b82f6]/45 px-4 py-2 text-sm font-semibold text-white backdrop-blur-md transition hover:scale-[1.02]"
+            className="group relative inline-flex items-center gap-2 overflow-hidden rounded-xl border border-orange-300/30 bg-gradient-to-b from-[#fbbf24]/20 via-[#f97316]/20 to-[#ea580c]/25 px-4 py-2 text-sm font-semibold text-white backdrop-blur-md transition hover:scale-[1.02] hover:bg-orange-500"
           >
             <span className="absolute inset-x-2 top-1 h-1 rounded-full bg-white/80 blur-sm" />
             Sign in
@@ -337,9 +339,9 @@ export function LandingPage() {
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 rounded-full border border-blue-400/30 bg-blue-500/20 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-blue-200"
+              className="inline-flex items-center gap-2 rounded-full border border-orange-400/30 bg-orange-500/15 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-orange-200"
             >
-              <Sparkles className="h-3.5 w-3.5" />
+              <Sparkles className="h-3.5 w-3.5 text-orange-300" />
               University Bus Tracking
             </motion.div>
             <HeroHeadline />
@@ -357,7 +359,7 @@ export function LandingPage() {
           <div
             className="relative flex justify-center md:justify-end"
             style={{
-              backgroundImage: `radial-gradient(circle at ${heroGlow.x}% ${heroGlow.y}%, rgba(59,130,246,0.24), rgba(15,23,42,0) 45%)`,
+              backgroundImage: `radial-gradient(circle at ${heroGlow.x}% ${heroGlow.y}%, rgba(251,146,60,0.22), rgba(2,6,23,0) 45%)`,
             }}
           >
             <motion.div
@@ -381,8 +383,8 @@ export function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.4 }}
                 transition={{ delay: idx * 0.1, duration: 0.45 }}
-                whileHover={{ y: -6, boxShadow: "0 20px 40px rgba(59,130,246,0.2)" }}
-                className="rounded-2xl border border-blue-300/20 bg-white/5 p-5 backdrop-blur"
+                whileHover={{ y: -6, boxShadow: "0 20px 40px rgba(251,146,60,0.2)" }}
+                className="rounded-2xl border border-orange-300/20 bg-white/5 p-5 backdrop-blur"
               >
                 <p className="text-2xl font-extrabold text-white">{item.metric}</p>
                 <p className="mt-1 text-sm text-slate-300">{item.label}</p>
